@@ -181,6 +181,43 @@ Add screenshots of:
 
 ---
 
+## 📸 Project Screenshots
+
+### 🏠 Home Page
+![Home](assets/home.png)
+
+### 📂 PDF Processing
+![PDF Processing](assets/PDFprocessing.png)
+
+### 📄 Job Description
+![Job Description](assets/JobDescription.png)
+
+### 📊 ATS Score Comparison
+![ATS Score](assets/ATSscoreComparison.png)
+
+### 📋 Resume Comparison Table
+![Resume Comparison Table](assets/ResumeComparisonTable.png)
+
+### 📈 Resume Comparison
+![Resume Comparison](assets/ResumeComparison.png)
+
+### 🏆 Resume Ranking
+![Resume Ranking](assets/ResumeRanking.png)
+
+### 🛠 Resume Tools
+![Resume Tools](assets/ResumeTools.png)
+
+### 🎤 AI Mock Interview
+![AI Mock Interview](assets/AIMockInterview.png)
+
+### 📝 Interview Evaluation
+![Interview Evaluation](assets/interviewEvaluation.png)
+
+### ✅ Hiring Recommendation
+![Hiring Recommendation](assets/HiringRecommendation.png)
+
+---
+
 # 📈 Workflow
 
 ```
@@ -221,43 +258,6 @@ Build FAISS Vector Store
 - Email interview reports
 - Interview recording
 - PDF report generation
-
----
-
-## 📸 Project Screenshots
-
-### 🏠 Home Page
-![Home](assets/home.png)
-
-### 📂 PDF Processing
-![PDF Processing](assets/PDFprocessing.png)
-
-### 📄 Job Description
-![Job Description](assets/JobDescription.png)
-
-### 📊 ATS Score Comparison
-![ATS Score](assets/ATSscoreComparison.png)
-
-### 📋 Resume Comparison Table
-![Resume Comparison Table](assets/ResumeComparisonTable.png)
-
-### 📈 Resume Comparison
-![Resume Comparison](assets/ResumeComparison.png)
-
-### 🏆 Resume Ranking
-![Resume Ranking](assets/ResumeRanking.png)
-
-### 🛠 Resume Tools
-![Resume Tools](assets/ResumeTools.png)
-
-### 🎤 AI Mock Interview
-![AI Mock Interview](assets/AIMockInterview.png)
-
-### 📝 Interview Evaluation
-![Interview Evaluation](assets/interviewEvaluation.png)
-
-### ✅ Hiring Recommendation
-![Hiring Recommendation](assets/HiringRecommendation.png)
 
 ---
 
