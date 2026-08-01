@@ -153,10 +153,7 @@ embeddings = create_embeddings(chunks)
 store = VectorStore()
 store.build_index(embeddings, chunks)
 
-resume_files = [
-    file for file in uploaded_files
-    if "resume" in file.name.lower()
-]
+resume_files = uploaded_files
 
 if resume_files:
     suggested_questions = [
@@ -359,7 +356,34 @@ if resume_files:
 st.sidebar.markdown("---")
 st.sidebar.subheader("📋 AI Mock Interview")
 
+candidate_name = st.sidebar.text_input(
+    "👤 Candidate Name"
+)
+
+st.session_state.candidate_name = candidate_name
+
+if len(resume_files) == 0:
+    st.error("Please upload a resume first.")
+    st.stop()
+
+job_role = st.sidebar.selectbox(
+    "💼 Select Job Role",
+    [
+        "Python AI Engineer",
+        "Python Developer",
+        "Machine Learning Engineer",
+        "Data Scientist",
+        "AI Engineer"
+    ]
+)
+
+st.session_state.job_role = job_role
+
 if st.sidebar.button("📝 Start Mock Interview"):
+
+    if not st.session_state.candidate_name.strip():
+        st.sidebar.error("Please enter your name.")
+        st.stop()
 
     pdf = io.BytesIO(resume_files[0].getvalue())
     pages = load_pdf(pdf)
@@ -386,6 +410,12 @@ if st.sidebar.button("📝 Start Mock Interview"):
     st.session_state.questions = question_list
     st.session_state.answers = [""] * len(questions)
     st.session_state.current_question = 0
+    st.session_state.show_instructions = True
+    st.session_state.start_time = time.time()
+    st.session_state.interview_duration = 15 * 60 
+
+
+    st.rerun()  
 # Show interview completion page
 if st.session_state.interview_completed:
 
@@ -397,7 +427,46 @@ if st.session_state.interview_completed:
 
     st.markdown("### 📊 Final Interview Evaluation")
 
+    st.divider()
+
     st.markdown(st.session_state.final_feedback)
+
+    feedback = st.session_state.final_feedback.upper()
+
+    st.divider()
+
+    if "HIRING RECOMMENDATION: HIRE" in feedback:
+
+        st.success("""
+    ## ✅ HIRING RECOMMENDATION
+
+    ### HIRE
+
+    The candidate has demonstrated strong technical knowledge,
+    good communication, and problem-solving ability.
+    """)
+
+    elif "HIRING RECOMMENDATION: CONSIDER" in feedback:
+
+        st.warning("""
+    ## 🟡 HIRING RECOMMENDATION
+
+    ### CONSIDER
+
+    The candidate shows potential but needs improvement in
+    some technical areas.
+    """)
+
+    elif "HIRING RECOMMENDATION: REJECT" in feedback:
+
+        st.error("""
+    ## ❌ HIRING RECOMMENDATION
+
+    ### REJECT
+
+    The candidate currently does not meet the required
+    technical expectations for this role.
+    """)
 
     if st.button("🔄 Start New Interview"):
         st.session_state.interview_completed = False
@@ -405,28 +474,112 @@ if st.session_state.interview_completed:
         st.session_state.answers = []
         st.session_state.current_question = 0
         st.session_state.final_feedback = ""
+
+        if "start_time" in st.session_state:
+            del st.session_state.start_time
+
+        if "interview_duration" in st.session_state:
+            del st.session_state.interview_duration
+
         st.rerun()
 
     st.stop()
 
-if "questions" in st.session_state:
+if (
+    "questions" in st.session_state
+    and len(st.session_state.questions) > 0
+):
 
-    current = st.session_state.current_question
-    total = len(st.session_state.questions)
+    if (
+        "start_time" in st.session_state
+        and not st.session_state.interview_completed
+    ):
+
+        current = st.session_state.current_question
+        total = len(st.session_state.questions)
+
+    st.sidebar.markdown("---")
+    st.sidebar.subheader("👤 Candidate Dashboard")
+
+    st.sidebar.info(
+        f"""
+    **👤 Candidate:** {st.session_state.candidate_name}
+
+    **💼 Position:** {st.session_state.job_role}
+
+    **📄 Questions:** {total}
+    """
+    )
+
+    remaining = (
+        st.session_state.interview_duration
+        - (time.time() - st.session_state.start_time)
+    )
+
+    remaining = max(0, int(remaining))
+
+    mins = remaining // 60
+    secs = remaining % 60
+
+    st.sidebar.metric(
+        "⏳ Time Remaining",
+        f"{mins:02d}:{secs:02d}"
+    )
+    answered = len(
+        [a for a in st.session_state.answers if a.strip()]
+    )
+
+    st.sidebar.metric("✅ Answered", answered)
+
+    st.sidebar.metric(
+        "📝 Remaining",
+        total - answered
+    )
+    if remaining <= 0:
+
+        interview_text = ""
+
+        for q, a in zip(
+            st.session_state.questions,
+            st.session_state.answers
+        ):
+
+            interview_text += f"""
+Question:
+{q}
+
+Answer:
+{a}
+
+"""
+
+        with st.spinner("⏳ Time's Up! Submitting Interview..."):
+            st.session_state.final_feedback = evaluate_interview(interview_text)
+
+        st.session_state.interview_completed = True
+        st.rerun()
 
     if current < total:
 
-        st.subheader(f"Question {current+1}/{total}")
+        st.progress((current + 1) / total)
 
-        st.write(st.session_state.questions[current])
+        st.info(
+            f"""
+    ### 💬 Interview Question {current + 1} of {total}
+
+    {st.session_state.questions[current]}
+    """
+        )
 
         answer = st.text_area(
-            "Your Answer",
+            "✍️ Your Answer",
             value=(
                 st.session_state.answers[current]
                 if current < len(st.session_state.answers)
                 else ""
             ),
+            height=180,
+            placeholder="Type your answer here...",
             key=f"answer_{current}"
         )
 
@@ -523,53 +676,6 @@ if st.session_state.jd_text:
         height=250,
         disabled=True
     )
-
-
-uploaded_file = st.file_uploader(
-    "Choose a PDF",
-    type=["pdf"]
-)
-
-if uploaded_file is None:
-    st.info("📄 Please upload a PDF to start.")
-    st.stop()
-
-if uploaded_file:
-
-    pages = load_pdf(uploaded_file)
-    if not pages:
-        st.warning("⚠️ No text could be extracted from the PDF.")
-        st.stop()
-    chunks = create_chunks(pages)
-    embeddings = create_embeddings(chunks)
-
-    store = VectorStore()
-
-    store.build_index(embeddings, chunks)
-
-    st.sidebar.markdown("---")
-    st.sidebar.write("### Document Statistics")
-
-    st.sidebar.metric("Chunks", len(chunks))
-    st.sidebar.metric("Pages", len(set(chunk["page"] for chunk in chunks)))
-
-    st.success(f"Created {len(chunks)} chunks")
-
-    st.success("Embeddings generated successfully!")
-
-    st.success("FAISS index created!")
-
-    st.success(f"Created {len(chunks)} chunks.")
-
-    st.subheader("Generated Chunks")
-
-    for i, chunk in enumerate(chunks):
-
-        with st.expander(f"Chunk {i+1} (Page {chunk['page']})"):
-
-            st.write(chunk["content"])
-
-st.divider()
 
 # Show previous messages
 for message in st.session_state.messages:
@@ -685,30 +791,14 @@ if question:
             mime="text/plain"
         )
 
-progress = st.progress(0)
-
-progress.progress(20)
-pages = load_pdf(uploaded_file)
-
-progress.progress(40)
-chunks = create_chunks(pages)
-
-progress.progress(60)
-embeddings = create_embeddings(chunks)
-
-progress.progress(80)
-store = VectorStore()
-store.build_index(embeddings, chunks)
-
-progress.progress(100)
-progress.empty()
-
 st.divider()
 
 st.markdown(
     """
-    <div style='text-align:center;color:gray'>
-    Built with ❤️ using Streamlit, FAISS, Sentence Transformers and Groq Llama 3.3
+    <div style="text-align:center; color:#808080; font-size:14px; padding:15px;">
+        <h4>🤖 AI Recruitment Assistant</h4>
+        <p>Powered by <b>Streamlit • Groq • Llama 3.3 • FAISS • Sentence Transformers</b></p>
+        <p>© 2026 All Rights Reserved</p>
     </div>
     """,
     unsafe_allow_html=True
